@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test RSS Feeds</title>
+    <style>
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 20px;
+            background: #f4f4f4;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #0f62fe;
+        }
+        .feed-test {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .feed-test h3 {
+            margin-top: 0;
+            color: #161616;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4f1d4; color: #0e6027; }
+        .error { background: #ffd7d9; color: #750e13; }
+        .testing { background: #d0e2ff; color: #001d6c; }
+        .url {
+            font-family: monospace;
+            background: #f4f4f4;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .response {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        button {
+            background: #0f62fe;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #0353e9;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 RSS Feed Tester</h1>
+    <p>Testing RSS feeds with CORS proxy to diagnose article fetching issues.</p>
+    
+    <button onclick="testAllFeeds()">Test All Feeds</button>
+    <button onclick="testWithoutProxy()">Test Without Proxy</button>
+    <button onclick="clearResults()">Clear Results</button>
+
+    <div id="results"></div>
+
+    <script>
+        const feeds = [
+            {
+                name: 'Press Releases',
+                url: 'https://newsroom.ibm.com/announcements?pagetemplate=rss',
+                category: 'Press'
+            },
+            {
+                name: 'AI News',
+                url: 'https://newsroom.ibm.com/press-releases-artificial-intelligence?pagetemplate=rss',
+                category: 'development'
+            },
+            {
+                name: 'IBM Cloud Blog',
+                url: 'https://www.ibm.com/blog/feed/',
+                category: 'cloud'
+            },
+            {
+                name: 'IBM Security Intelligence',
+                url: 'https://securityintelligence.com/feed/',
+                category: 'security'
+            }
+        ];
+
+        const corsProxy = 'https://api.allorigins.win/raw?url=';
+
+        async function testFeed(feed, useProxy = true) {
+            const resultsDiv = document.getElementById('results');
+            const feedDiv = document.createElement('div');
+            feedDiv.className = 'feed-test';
+            feedDiv.id = `feed-${feed.name.replace(/\s/g, '-')}`;
+            
+            feedDiv.innerHTML = `
+                <h3>${feed.name}</h3>
+                <div class="url">Original: ${feed.url}</div>
+                ${useProxy ? `<div class="url">Proxied: ${corsProxy}${encodeURIComponent(feed.url)}</div>` : ''}
+                <div class="status testing">⏳ Testing...</div>
+                <div class="response" id="response-${feed.name.replace(/\s/g, '-')}"></div>
+            `;
+            
+            resultsDiv.appendChild(feedDiv);
+
+            try {
+                const testUrl = useProxy ? corsProxy + encodeURIComponent(feed.url) : feed.url;
+                const startTime = Date.now();
+                
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/rss+xml, application/xml, text/xml, text/html'
+                    }
+                });
+
+                const duration = Date.now() - startTime;
+                const text = await response.text();
+
+                const statusDiv = feedDiv.querySelector('.status');
+                const responseDiv = document.getElementById(`response-${feed.name.replace(/\s/g, '-')}`);
+
+                if (response.ok) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `✅ Success (${response.status}) - ${duration}ms`;
+                    
+                    // Try to parse as XML
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(text, 'text/xml');
+                    const parserError = xmlDoc.querySelector('parsererror');
+                    
+                    if (parserError) {
+                        responseDiv.innerHTML = `<strong>⚠️ XML Parse Error:</strong><br>${parserError.textContent}<br><br><strong>Response Preview:</strong><br>${text.substring(0, 500)}...`;
+                    } else {
+                        const items = xmlDoc.querySelectorAll('item, entry');
+                        responseDiv.innerHTML = `
+                            <strong>✅ Valid RSS/XML Feed</strong><br>
+                            Found ${items.length} items<br><br>
+                            <strong>First Item:</strong><br>
+                            ${items[0] ? items[0].querySelector('title')?.textContent || 'No title' : 'No items found'}<br><br>
+                            <strong>Response Preview:</strong><br>${text.substring(0, 500)}...
+                        `;
+                    }
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `❌ Failed (${response.status} ${response.statusText})`;
+                    responseDiv.innerHTML = `<strong>Error Response:</strong><br>${text.substring(0, 500)}...`;
+                }
+
+            } catch (error) {
+                const statusDiv = feedDiv.querySelector('.status');
+                const responseDiv = document.getElementById(`response-${feed.name.replace(/\s/g, '-')}`);
+                
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+                responseDiv.innerHTML = `<strong>Exception:</strong><br>${error.toString()}<br><br><strong>Stack:</strong><br>${error.stack}`;
+            }
+        }
+
+        async function testAllFeeds() {
+            clearResults();
+            document.getElementById('results').innerHTML = '<h2>Testing with CORS Proxy...</h2>';
+            
+            for (const feed of feeds) {
+                await testFeed(feed, true);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between requests
+            }
+        }
+
+        async function testWithoutProxy() {
+            clearResults();
+            document.getElementById('results').innerHTML = '<h2>Testing without CORS Proxy (will likely fail due to CORS)...</h2>';
+            
+            for (const feed of feeds) {
+                await testFeed(feed, false);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            console.log('RSS Feed Tester loaded. Click "Test All Feeds" to begin.');
+        });
+    </script>
+</body>
+</html>

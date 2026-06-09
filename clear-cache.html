@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear IBM Knowledge Hub Cache</title>
+    <style>
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #0f62fe 0%, #001d6c 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            max-width: 500px;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        button {
+            background: #0f62fe;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #0353e9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .success {
+            background: #24a148;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+        .info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .cache-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Clear Cache</h1>
+        <p>Clear the IBM Knowledge Hub cache to load fresh articles from the new RSS feeds.</p>
+        
+        <div class="cache-info" id="cacheInfo">
+            <strong>Current Cache:</strong><br>
+            <span id="cacheStats">Loading...</span>
+        </div>
+
+        <button onclick="clearCache()">Clear All Cache</button>
+        <button onclick="clearArticlesOnly()">Clear Articles Only</button>
+        <button onclick="window.location.href='index.html'">Go to App</button>
+
+        <div class="success" id="successMessage">
+            ✅ Cache cleared successfully!<br>
+            <small>Redirecting to app in 2 seconds...</small>
+        </div>
+
+        <div class="info">
+            <strong>What this does:</strong><br>
+            Removes cached articles and videos from localStorage,<br>
+            forcing the app to fetch fresh data from RSS feeds.
+        </div>
+    </div>
+
+    <script>
+        // Display cache stats
+        function displayCacheStats() {
+            const keys = Object.keys(localStorage);
+            const cacheKeys = keys.filter(key => key.startsWith('ibm-hub-'));
+            
+            let stats = `Found ${cacheKeys.length} cached items:\n`;
+            cacheKeys.forEach(key => {
+                const data = localStorage.getItem(key);
+                const size = new Blob([data]).size;
+                stats += `\n• ${key}: ${(size / 1024).toFixed(2)} KB`;
+            });
+            
+            document.getElementById('cacheStats').textContent = stats || 'No cache found';
+        }
+
+        // Clear all cache
+        function clearCache() {
+            const keys = Object.keys(localStorage);
+            const cacheKeys = keys.filter(key => key.startsWith('ibm-hub-'));
+            
+            cacheKeys.forEach(key => localStorage.removeItem(key));
+            
+            showSuccess();
+            console.log(`Cleared ${cacheKeys.length} cache entries`);
+        }
+
+        // Clear articles only
+        function clearArticlesOnly() {
+            localStorage.removeItem('ibm-hub-articles');
+            localStorage.removeItem('ibm-hub-summaries');
+            
+            showSuccess();
+            console.log('Cleared articles cache');
+        }
+
+        // Show success message and redirect
+        function showSuccess() {
+            document.getElementById('successMessage').style.display = 'block';
+            displayCacheStats();
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
+
+        // Initialize
+        displayCacheStats();
+    </script>
+</body>
+</html>

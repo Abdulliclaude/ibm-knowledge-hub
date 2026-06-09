@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Console - IBM Knowledge Hub</title>
+    <style>
+        body {
+            font-family: 'IBM Plex Sans', monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 { color: #4fc3f7; }
+        .log-container {
+            background: #252526;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4fc3f7;
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .log-info { background: #1e3a5f; color: #4fc3f7; }
+        .log-success { background: #1e4620; color: #4caf50; }
+        .log-error { background: #5f1e1e; color: #f44336; }
+        .log-warn { background: #5f4a1e; color: #ff9800; }
+        button {
+            background: #0f62fe;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0353e9; }
+        .data-display {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Console</h1>
+    <p>This page will show you exactly what's happening when articles are fetched.</p>
+
+    <button onclick="testArticleFetch()">Test Article Fetch</button>
+    <button onclick="testYouTubeFetch()">Test YouTube Fetch</button>
+    <button onclick="clearLogs()">Clear Logs</button>
+    <button onclick="window.location.href='index.html'">Go to App</button>
+
+    <div id="logContainer"></div>
+
+    <!-- Load all dependencies -->
+    <script src="config.js"></script>
+    <script src="js/utils/cache.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/api/articles.js"></script>
+    <script src="js/api/youtube.js"></script>
+
+    <script>
+        const logContainer = document.getElementById('logContainer');
+
+        function addLog(message, type = 'info') {
+            const logDiv = document.createElement('div');
+            logDiv.className = 'log-container';
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            logDiv.appendChild(logEntry);
+            logContainer.appendChild(logDiv);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function addDataDisplay(title, data) {
+            const dataDiv = document.createElement('div');
+            dataDiv.className = 'log-container';
+            dataDiv.innerHTML = `
+                <strong>${title}</strong>
+                <div class="data-display">
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+            logContainer.appendChild(dataDiv);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            logContainer.innerHTML = '';
+        }
+
+        // Override console methods to capture logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog(args.join(' '), 'info');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog(args.join(' '), 'error');
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addLog(args.join(' '), 'warn');
+        };
+
+        async function testArticleFetch() {
+            clearLogs();
+            addLog('🚀 Starting Article Fetch Test...', 'info');
+            
+            try {
+                // Show config
+                addLog('📋 Configuration:', 'info');
+                addDataDisplay('Article Sources', CONFIG.articles.sources);
+                addLog(`CORS Proxy: ${CONFIG.articles.corsProxy}`, 'info');
+                addLog(`Cache Enabled: ${CONFIG.cache.enableCache}`, 'info');
+                
+                // Clear cache first
+                addLog('🗑️ Clearing article cache...', 'info');
+                CacheManager.clear(CACHE_KEYS.ARTICLES);
+                
+                // Fetch articles
+                addLog('📡 Fetching articles...', 'info');
+                const articles = await ArticlesAPI.fetchArticles();
+                
+                addLog(`✅ SUCCESS: Fetched ${articles.length} articles`, 'success');
+                
+                if (articles.length > 0) {
+                    addDataDisplay('First 3 Articles', articles.slice(0, 3));
+                    
+                    // Show breakdown by source
+                    const bySource = {};
+                    articles.forEach(article => {
+                        bySource[article.source] = (bySource[article.source] || 0) + 1;
+                    });
+                    addDataDisplay('Articles by Source', bySource);
+                } else {
+                    addLog('⚠️ No articles were fetched!', 'warn');
+                }
+                
+            } catch (error) {
+                addLog(`❌ ERROR: ${error.message}`, 'error');
+                addDataDisplay('Error Details', {
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }
+
+        async function testYouTubeFetch() {
+            clearLogs();
+            addLog('🚀 Starting YouTube Fetch Test...', 'info');
+            
+            try {
+                addLog('📋 YouTube Configuration:', 'info');
+                addDataDisplay('YouTube Config', CONFIG.youtube);
+                
+                // Clear cache
+                addLog('🗑️ Clearing video cache...', 'info');
+                CacheManager.clear(CACHE_KEYS.VIDEOS);
+                
+                // Fetch videos
+                addLog('📡 Fetching videos...', 'info');
+                const videos = await YouTubeAPI.fetchVideos();
+                
+                addLog(`✅ SUCCESS: Fetched ${videos.length} videos`, 'success');
+                
+                if (videos.length > 0) {
+                    addDataDisplay('First 3 Videos', videos.slice(0, 3).map(v => ({
+                        title: v.title,
+                        channel: v.channelTitle,
+                        views: v.viewCountFormatted,
+                        duration: v.durationFormatted
+                    })));
+                }
+                
+            } catch (error) {
+                addLog(`❌ ERROR: ${error.message}`, 'error');
+                addDataDisplay('Error Details', {
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            addLog('🔧 Debug Console Ready', 'success');
+            addLog('Click "Test Article Fetch" to diagnose article loading issues', 'info');
+        });
+    </script>
+</body>
+</html>

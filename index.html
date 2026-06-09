@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IBM Knowledge Hub - Centralized hub for IBM articles and videos">
+    <title>IBM Knowledge Hub</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/notion-style.css">
+    <link rel="stylesheet" href="css/ibm-theme.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Loading IBM content...</p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">📚</span>
+                    <h1 class="logo-text">IBM Knowledge Hub</h1>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <span class="toggle-icon">☰</span>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#all" class="nav-item active" data-view="all">
+                    <span class="nav-icon">📚</span>
+                    <span class="nav-text">All Content</span>
+                    <span class="nav-count" id="countAll">0</span>
+                </a>
+                <a href="#articles" class="nav-item" data-view="articles">
+                    <span class="nav-icon">📄</span>
+                    <span class="nav-text">Articles</span>
+                    <span class="nav-count" id="countArticles">0</span>
+                </a>
+                <a href="#videos" class="nav-item" data-view="videos">
+                    <span class="nav-icon">🎥</span>
+                    <span class="nav-text">Videos</span>
+                    <span class="nav-count" id="countVideos">0</span>
+                </a>
+                <a href="#bookmarks" class="nav-item" data-view="bookmarks">
+                    <span class="nav-icon">⭐</span>
+                    <span class="nav-text">Bookmarks</span>
+                    <span class="nav-count" id="countBookmarks">0</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-filters">
+                <h3 class="filter-title">Categories</h3>
+                <div class="filter-group">
+                    <label class="filter-item">
+                        <input type="checkbox" value="research" class="filter-checkbox">
+                        <span class="filter-label">🔬 Research</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="cloud" class="filter-checkbox">
+                        <span class="filter-label">☁️ Cloud</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="ai" class="filter-checkbox">
+                        <span class="filter-label">🤖 AI</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="security" class="filter-checkbox">
+                        <span class="filter-label">🔒 Security</span>
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" value="development" class="filter-checkbox">
+                        <span class="filter-label">💻 Development</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn-refresh" id="refreshBtn">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">Refresh Content</span>
+                </button>
+                <p class="last-updated">Last updated: <span id="lastUpdated">Never</span></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchInput"
+                        placeholder="Search IBM content..."
+                        aria-label="Search content"
+                    >
+                    <button class="search-btn" aria-label="Search">
+                        <span class="search-icon">🔍</span>
+                    </button>
+                </div>
+
+                <div class="header-actions">
+                    <select class="sort-select" id="sortSelect">
+                        <option value="date-desc">Newest First</option>
+                        <option value="date-asc">Oldest First</option>
+                        <option value="title-asc">Title A-Z</option>
+                        <option value="title-desc">Title Z-A</option>
+                    </select>
+                    <button class="btn-view-toggle" id="viewToggle" aria-label="Toggle view">
+                        <span class="view-icon">⊞</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="content-info">
+                    <h2 class="content-title" id="contentTitle">All Content</h2>
+                    <p class="content-subtitle" id="contentSubtitle">Showing all IBM articles and videos</p>
+                </div>
+
+                <!-- Error Message -->
+                <div class="error-message" id="errorMessage" style="display: none;">
+                    <span class="error-icon">⚠️</span>
+                    <div class="error-content">
+                        <h3 class="error-title">Oops! Something went wrong</h3>
+                        <p class="error-text" id="errorText"></p>
+                        <button class="btn-retry" id="retryBtn">Try Again</button>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <span class="empty-icon">📭</span>
+                    <h3 class="empty-title">No content found</h3>
+                    <p class="empty-text">Try adjusting your filters or search query</p>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="content-grid" id="contentGrid">
+                    <!-- Content cards will be dynamically inserted here -->
+                </div>
+
+                <!-- Load More -->
+                <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                    <button class="btn-load-more" id="loadMoreBtn">
+                        Load More Content
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Content Details -->
+    <div class="modal" id="contentModal" style="display: none;">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose" aria-label="Close modal">×</button>
+            <div class="modal-body" id="modalBody">
+                <!-- Modal content will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration -->
+    <script src="config.production.js"></script>
+    <script src="js/config-loader.js"></script>
+    
+    <!-- Utilities -->
+    <script src="js/utils/cache.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    
+    <!-- API Clients -->
+    <script src="js/api/groq.js"></script>
+    <script src="js/api/youtube.js"></script>
+    <script src="js/api/articles.js"></script>
+    
+    <!-- Components -->
+    <script src="js/components/articleCard.js"></script>
+    <script src="js/components/videoCard.js"></script>
+    <script src="js/components/sidebar.js"></script>
+    
+    <!-- Main App -->
+    <script src="js/app.js"></script>
+</body>
+</html>
