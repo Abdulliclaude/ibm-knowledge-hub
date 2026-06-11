@@ -32,9 +32,35 @@ const CONFIG = {
         url: 'https://newsroom.ibm.com/press-releases-artificial-intelligence?pagetemplate=rss',
         category: 'development',
         icon: '💻'
+      },
+      {
+        name: 'Corporate Press Releases',
+        url: 'https://newsroom.ibm.com/press-releases-corporate?pagetemplate=rss',
+        category: 'Press',
+        icon: '🏢'
+      },
+      {
+        name: 'Research & Innovation Press Releases',
+        url: 'https://newsroom.ibm.com/press-releases-research-and-innovation?pagetemplate=rss',
+        category: 'Research',
+        icon: '🔬'
+      },
+      {
+        name: 'Latest Research & Innovation News',
+        url: 'https://newsroom.ibm.com/latest-news-research-and-innovation',
+        category: 'Research',
+        icon: '🚀'
+      },
+      {
+        name: 'Mergers & Acquisitions',
+        url: 'https://newsroom.ibm.com/mergers-and-acquisitions?pagetemplate=rss',
+        category: 'Business',
+        icon: '🤝'
       }
     ],
-    corsProxy: 'https://api.allorigins.win/raw?url=',
+    // Using corsproxy.io which is more reliable
+    // Alternative: 'https://api.allorigins.win/raw?url=' or 'https://api.codetabs.com/v1/proxy?quest='
+    corsProxy: 'https://corsproxy.io/?',
   },
 
   // Cache Configuration
