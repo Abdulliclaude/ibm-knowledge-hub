@@ -58,9 +58,9 @@ const CONFIG = {
         icon: '🤝'
       }
     ],
-    // Using corsproxy.io which is more reliable
-    // Alternative: 'https://api.allorigins.win/raw?url=' or 'https://api.codetabs.com/v1/proxy?quest='
-    corsProxy: 'https://corsproxy.io/?',
+    // Using api.codetabs.com which is most reliable
+    // Alternative: 'https://corsproxy.io/?' or 'https://api.allorigins.win/raw?url='
+    corsProxy: 'https://api.codetabs.com/v1/proxy?quest=',
   },
 
   // Cache Configuration
