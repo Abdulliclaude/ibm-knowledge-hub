@@ -67,13 +67,13 @@ const ArticlesAPI = {
     try {
       console.log(`📡 Fetching from ${source.name}...`);
 
-      // Use CORS proxy
-      const proxyUrl = CONFIG.articles.corsProxy + encodeURIComponent(source.url);
+      // Use our own Vercel serverless function as CORS proxy
+      const proxyUrl = '/api/rss?url=' + encodeURIComponent(source.url);
       
       const response = await fetch(proxyUrl, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/xml, text/xml'
         }
       });
 
@@ -81,9 +81,8 @@ const ArticlesAPI = {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // allorigins.win returns JSON with {contents: "..."} structure
-      const data = await response.json();
-      const xmlText = data.contents || data;
+      // Our proxy returns raw XML text
+      const xmlText = await response.text();
       
       // Parse XML - try as HTML first to handle malformed XML
       const parser = new DOMParser();
