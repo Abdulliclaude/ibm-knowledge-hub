@@ -47,7 +47,7 @@ const CONFIG = {
       },
       {
         name: 'Latest Research & Innovation News',
-        url: 'https://newsroom.ibm.com/latest-news-research-and-innovation',
+        url: 'https://newsroom.ibm.com/latest-news-research-and-innovation?pagetemplate=rss',
         category: 'Research',
         icon: '🚀'
       },
@@ -58,9 +58,9 @@ const CONFIG = {
         icon: '🤝'
       }
     ],
-    // Using api.codetabs.com which is most reliable
-    // Alternative: 'https://corsproxy.io/?' or 'https://api.allorigins.win/raw?url='
-    corsProxy: 'https://api.codetabs.com/v1/proxy?quest=',
+    // Using allorigins.win with /get endpoint (returns JSON with contents field)
+    // This is more reliable than /raw endpoint
+    corsProxy: 'https://api.allorigins.win/get?url=',
   },
 
   // Cache Configuration

@@ -73,7 +73,7 @@ const ArticlesAPI = {
       const response = await fetch(proxyUrl, {
         method: 'GET',
         headers: {
-          'Accept': 'application/rss+xml, application/xml, text/xml'
+          'Accept': 'application/json'
         }
       });
 
@@ -81,7 +81,9 @@ const ArticlesAPI = {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const xmlText = await response.text();
+      // allorigins.win returns JSON with {contents: "..."} structure
+      const data = await response.json();
+      const xmlText = data.contents || data;
       
       // Parse XML - try as HTML first to handle malformed XML
       const parser = new DOMParser();
